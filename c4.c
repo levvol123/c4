@@ -10,8 +10,8 @@ disc discs[ROWS][COLUMNS] = {0};
 int next_disc[COLUMNS];
 disc next_colour;
 
-int column_moves[BOARD_SIZE];
-int row_moves[BOARD_SIZE];
+int column_moves[BOARD_SIZE+1];
+int row_moves[BOARD_SIZE+1];
 int number_of_moves;
 
 
