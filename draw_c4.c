@@ -110,7 +110,7 @@ int main(){
     init_c4();
     //SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     SetConfigFlags(FLAG_MSAA_4X_HINT);   
-    InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window");
+    InitWindow(screenWidth, screenHeight, "Connect Four");
 
     SetTargetFPS(120);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -128,7 +128,7 @@ int main(){
                 current_column_index -=1;
             }
         }
-        if(IsKeyPressed(KEY_SPACE)){
+        if(IsKeyPressed(KEY_DOWN)){
             place_disc(current_column_index);
         }
         if(IsKeyPressed(KEY_ONE)){
