@@ -10,6 +10,11 @@ disc discs[ROWS][COLUMNS] = {0};
 int next_disc[COLUMNS];
 disc next_colour;
 
+int column_moves[BOARD_SIZE];
+int row_moves[BOARD_SIZE];
+int number_of_moves;
+
+
 void init_c4(){
     for (int i = 0; i < COLUMNS; i++)
     {
@@ -45,7 +50,25 @@ void place_disc(int column){
         else{
             next_colour = DISC_RED;
         }
+        number_of_moves +=1;
+        column_moves[number_of_moves] = column;
+        row_moves[number_of_moves] = next_disc[column];
     }
+}
+
+void undo_last_move(){
+    if(number_of_moves > 0){
+        discs[row_moves[number_of_moves]][column_moves[number_of_moves]] = EMPTY;
+        next_disc[column_moves[number_of_moves]] +=1;
+        number_of_moves -=1;
+        if(next_colour == DISC_RED){
+            next_colour = DISC_BLUE;
+        }
+        else{
+            next_colour = DISC_RED;
+        }
+    }
+
 }
 
 int evaluate_position(){

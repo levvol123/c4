@@ -117,7 +117,9 @@ int main(){
     // Main game loop
     while (!WindowShouldClose()) 
     {
-
+        if(IsKeyPressed(KEY_U)){
+            undo_last_move();
+        }
         if(IsKeyPressed(KEY_RIGHT)){
             if(current_column_index < COLUMNS-1){
                 current_column_index +=1;
