@@ -37,6 +37,13 @@ int get_color(int row, int column){
             break;
     }
 }
+int get_current_player(){
+    if(next_colour == DISC_BLUE){
+        return 2;
+    } else{
+        return 1;
+    }
+}
 void place_disc(int column){
     if(next_disc[column] > 0){
         next_disc[column] -=1; 
@@ -71,22 +78,24 @@ void undo_last_move(){
 
 }
 
-int evaluate_position(){
-    int count = 0;
-    //evaluate rows ->start at ---x---
-    for (int i = 0; i < ROWS; i++)
-    {
-        /* code */
-    }
-    
-    //evaluate columns
-    //evaluate diagonals
-
-
-    return 0;
+int get_next_row_from_column(int column){
+    return next_disc[column];
 }
 
-int evaluate_position_on_last_move(int column){
+// int evaluate_position(){
+//     int count = 0;
+//     //evaluate rows ->start at ---x---
+//     for (int i = 0; i < ROWS; i++)
+//     {
+//         /* code */
+//     }
+    
+//     //evaluate columns
+//     //evaluate diagonals
+//     return 0;
+// }  
+
+/* int evaluate_position_on_last_move(int column){
     int red;
     int blue;
     //evaluate row ->start at ---x---
@@ -100,4 +109,4 @@ int evaluate_position_on_last_move(int column){
     
     
     //evaluate diagonals
-}
+} */

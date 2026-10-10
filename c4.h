@@ -9,5 +9,7 @@ int evaluate_position();
 void place_disc(int column);
 void init_c4();
 void undo_last_move();
+int get_next_row_from_column(int column);
+int get_current_player();
 
 #endif
