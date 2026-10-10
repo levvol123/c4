@@ -63,7 +63,7 @@ void place_disc(int column){
     }
 }
 
-void undo_last_move(){
+int undo_last_move(){
     if(number_of_moves > 0){
         discs[row_moves[number_of_moves]][column_moves[number_of_moves]] = EMPTY;
         next_disc[column_moves[number_of_moves]] +=1;
@@ -74,8 +74,9 @@ void undo_last_move(){
         else{
             next_colour = DISC_RED;
         }
+        return 1;
     }
-
+    return 0;
 }
 
 int get_next_row_from_column(int column){

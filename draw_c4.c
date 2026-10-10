@@ -103,15 +103,13 @@ void draw_discs(int width, int height){
             }
 }
 void draw_column_selector(int index, int height, int left_pad, int bottom_pad, float step_x){
-    //DrawCircle(index*200 + 70, 10, 10, GREEN);
     Vector2 center = {.x = left_pad + step_x*index + 0.1*step_x, .y = height - (bottom_pad * 0.85)};
-    //DrawCircleV(center, 10, GREEN);
     DrawRectangleV(center, (Vector2){.x = 0.8*step_x, .y = 3}, current_theme->column_selector);
 }
 
 void animate_falling_disc(int *play_animation, falling_disc *the_disc, int top_pad, int step_y){
     if(*play_animation == 1){
-        the_disc->position.y +=10;
+        the_disc->position.y +=10; //TODO: framerate independent
         float height = top_pad +step_y/2+ (get_next_row_from_column(the_disc->column)-1) *step_y; 
         if(the_disc->position.y >= height) {
             *play_animation = 0;
@@ -133,7 +131,6 @@ int main(){
 
     int play_falling_disc_animation = 0;
     falling_disc the_falling_disk = {0};
-
 
     current_theme = &themes[LIGHT];
     init_c4();
@@ -163,6 +160,11 @@ int main(){
 
         if(IsKeyPressed(KEY_U)){
             undo_last_move();
+        } else if(IsKeyPressed(KEY_R)){
+            while (undo_last_move() == 1)
+            {
+                ;
+            }
         } else if(IsKeyPressed(KEY_RIGHT)){
             if(current_column_index < COLUMNS-1){
                 current_column_index +=1;
@@ -188,11 +190,8 @@ int main(){
         }
 
         BeginDrawing();
-
             //draw_board();
             //ClearBackground(LIGHTGRAY);
-
-
             draw_background(width, height);
             animate_falling_disc(&play_falling_disc_animation, &the_falling_disk, top_pad, step_y);
             draw_discs(width, height);
@@ -201,7 +200,6 @@ int main(){
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
-
     // De-Initialization
     //--------------------------------------------------------------------------------------
     CloseWindow();        // Close window and OpenGL context
