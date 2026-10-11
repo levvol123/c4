@@ -2,7 +2,6 @@
 #include "c4.h"
 #include <stdio.h>
 
-
 #define LEFT_PAD_RATIO   0.2f
 #define RIGHT_PAD_RATIO  0.2f
 #define TOP_PAD_RATIO    0.3f
@@ -138,24 +137,24 @@ int main(){
     SetConfigFlags(FLAG_MSAA_4X_HINT);   
     InitWindow(screenWidth, screenHeight, "Connect Four");
 
-    SetTargetFPS(120);               // Set our game to run at 60 frames-per-second
+    SetTargetFPS(120);
     //--------------------------------------------------------------------------------------
     // Main game loop
     while (!WindowShouldClose()) 
     {
-            int height = GetScreenHeight();
-            int width = GetScreenWidth();
+        int height = GetScreenHeight();
+        int width = GetScreenWidth();
 
-            int left_pad = width * LEFT_PAD_RATIO;
-            int right_pad = width * RIGHT_PAD_RATIO;
-            int top_pad = height * TOP_PAD_RATIO;
-            int bottom_pad = height * BOTTOM_PAD_RATIO;
+        int left_pad = width * LEFT_PAD_RATIO;
+        int right_pad = width * RIGHT_PAD_RATIO;
+        int top_pad = height * TOP_PAD_RATIO;
+        int bottom_pad = height * BOTTOM_PAD_RATIO;
 
-            int grid_width  = width - left_pad - right_pad;
-            int grid_height = height - top_pad - bottom_pad;
+        int grid_width  = width - left_pad - right_pad;
+        int grid_height = height - top_pad - bottom_pad;
 
-            float step_x = grid_width / COLUMNS;
-            float step_y = grid_height / ROWS;
+        float step_x = grid_width / COLUMNS;
+        float step_y = grid_height / ROWS;
 
 
         if(IsKeyPressed(KEY_U)){
@@ -206,4 +205,3 @@ int main(){
     //--------------------------------------------------------------------------------------
     return 0;
 }
-
