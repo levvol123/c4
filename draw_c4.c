@@ -53,7 +53,7 @@ static color_palette themes[NUMBER_OF_THEMES] = {
 color_palette *current_theme;
 
 void draw_background(int width, int height){
-    ClearBackground(current_theme->background);
+    //ClearBackground(current_theme->background);
     int left_pad = width * LEFT_PAD_RATIO;
     int right_pad = width * RIGHT_PAD_RATIO;
     int top_pad = height * TOP_PAD_RATIO;
@@ -101,6 +101,25 @@ void draw_discs(int width, int height){
                 }
             }
 }
+
+void draw_grid(){
+    static int steps_x = 1000 / 50;
+    static int steps_y = 1000 / 50;  
+    for (int i = 0; i <= steps_x; i++)
+        {
+            for (int j = 0; j <= steps_y; j++)
+            {
+                if(j > 1 && j < 10 && i > 2 && i < 11){
+                    Vector2 center = {.x = 90*j+40, .y = i *90+40};
+                    DrawCircleV(center, 3.0f, RED);
+                } else {
+                    Vector2 center = {.x = 90*j+40, .y = i *90+40};
+                    DrawCircleV(center, 3.0f, BLUE);
+                }
+
+            }
+        }
+}
 void draw_column_selector(int index, int height, int left_pad, int bottom_pad, float step_x){
     Vector2 center = {.x = left_pad + step_x*index + 0.1*step_x, .y = height - (bottom_pad * 0.85)};
     DrawRectangleV(center, (Vector2){.x = 0.8*step_x, .y = 3}, current_theme->column_selector);
@@ -121,6 +140,16 @@ void animate_falling_disc(int *play_animation, falling_disc *the_disc, int top_p
         }
     }
 }
+static Camera2D fit_camera(){
+    float sw = GetScreenWidth(), sh = GetScreenHeight();
+    float scale = fminf(sw / 1080.f, sh / 1080.f);
+    return (Camera2D){
+        .offset   = { (sw - 1080.f*scale) / 2, (sh - 1080.f*scale) / 2 },
+        .target   = { 0, 0 },
+        .rotation = 0,
+        .zoom     = scale,
+    };
+}
 
 int main(){
 
@@ -131,10 +160,13 @@ int main(){
     int play_falling_disc_animation = 0;
     falling_disc the_falling_disk = {0};
 
+    Camera2D camera = { 0 };
+
     current_theme = &themes[LIGHT];
     init_c4();
     //SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-    SetConfigFlags(FLAG_MSAA_4X_HINT);   
+    //SetConfigFlags(FLAG_MSAA_4X_HINT);
+    SetConfigFlags(FLAG_WINDOW_HIGHDPI | FLAG_WINDOW_RESIZABLE | FLAG_MSAA_4X_HINT);   
     InitWindow(screenWidth, screenHeight, "Connect Four");
 
     SetTargetFPS(120);
@@ -187,14 +219,18 @@ int main(){
         } else if(IsKeyPressed(KEY_THREE)){
             current_theme = &themes[LIGHT_COLOR];
         }
-
+        camera = fit_camera();
         BeginDrawing();
-            //draw_board();
-            //ClearBackground(LIGHTGRAY);
-            draw_background(width, height);
+            ClearBackground(current_theme->background);
+            BeginMode2D(camera);
+            //----------
+            //draw_background(width, height);
+            draw_grid();
             animate_falling_disc(&play_falling_disc_animation, &the_falling_disk, top_pad, step_y);
             draw_discs(width, height);
             draw_column_selector(current_column_index, height, left_pad, bottom_pad, step_x);
+            //---------
+            EndMode2D();
 
         EndDrawing();
         //----------------------------------------------------------------------------------
