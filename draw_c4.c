@@ -102,18 +102,18 @@ void draw_column_selector(int index){
     DrawRectangleV(center, (Vector2){.x = 0.8*CELL_WALL_LENGTH, .y = 3}, current_theme->column_selector);
 }
 
-void animate_falling_disc(int *play_animation, falling_disc *the_disc, int top_pad, int step_y){
+void animate_falling_disc(int *play_animation, falling_disc *the_disc){
     if(*play_animation == 1){
-        the_disc->position.y +=10; //TODO: framerate independent
-        float height = top_pad +step_y/2+ (get_next_row_from_column(the_disc->column)-1) *step_y; 
-        if(the_disc->position.y >= height) {
+        the_disc->position.y += 10;
+        int height = ((get_next_row_from_column(the_disc->column)-1) * CELL_WALL_LENGTH) + GRID_OFFSET_Y + ( 4.5 * CELL_WALL_LENGTH);
+        if(the_disc->position.y >= height){
             *play_animation = 0;
             place_disc(the_disc->column);
         }
         if(the_disc->player == 1){
-            DrawCircleV(the_disc->position, 40, current_theme->disc1);
+            DrawCircleV(the_disc->position, DISC_SIZE, current_theme->disc1);
         } else {
-            DrawCircleV(the_disc->position, 40, current_theme->disc2);
+            DrawCircleV(the_disc->position, DISC_SIZE, current_theme->disc2);
         }
     }
 }
@@ -182,7 +182,7 @@ int main(){
         } else if(IsKeyPressed(KEY_DOWN)){
             if(play_falling_disc_animation == 0 && get_next_row_from_column(current_column_index) != 0){
                 the_falling_disk.column = current_column_index;
-                the_falling_disk.position = (Vector2){.x = left_pad+step_x/2 + step_x*current_column_index, .y = top_pad +step_y/2};
+                the_falling_disk.position = (Vector2){.x = (current_column_index * CELL_WALL_LENGTH) + GRID_OFFSET_X + (2.5 * CELL_WALL_LENGTH), .y = GRID_OFFSET_Y + (4.5 * CELL_WALL_LENGTH)};
                 the_falling_disk.player = get_current_player();
                 play_falling_disc_animation = 1;
             }
@@ -200,7 +200,7 @@ int main(){
             BeginMode2D(camera);
             //----------
             draw_grid();
-            animate_falling_disc(&play_falling_disc_animation, &the_falling_disk, top_pad, step_y);
+            animate_falling_disc(&play_falling_disc_animation, &the_falling_disk);
             draw_discs();
             draw_column_selector(current_column_index);
             //---------
