@@ -1,12 +1,7 @@
 #include <raylib.h>
 #include "c4.h"
 #include <stdio.h>
-
-#define LEFT_PAD_RATIO   0.2f
-#define RIGHT_PAD_RATIO  0.2f
-#define TOP_PAD_RATIO    0.3f
-#define BOTTOM_PAD_RATIO 0.15f
-#define DISC_RATIO       0.06f
+#include <math.h>
 
 #define LOGICAL_HEIGHT 1000
 #define LOGICAL_WIDTH  1000
@@ -149,20 +144,6 @@ int main(){
     // Main game loop
     while (!WindowShouldClose()) 
     {
-        int height = GetScreenHeight();
-        int width = GetScreenWidth();
-
-        int left_pad = width * LEFT_PAD_RATIO;
-        int right_pad = width * RIGHT_PAD_RATIO;
-        int top_pad = height * TOP_PAD_RATIO;
-        int bottom_pad = height * BOTTOM_PAD_RATIO;
-
-        int grid_width  = width - left_pad - right_pad;
-        int grid_height = height - top_pad - bottom_pad;
-
-        float step_x = grid_width / COLUMNS;
-        float step_y = grid_height / ROWS;
-
 
         if(IsKeyPressed(KEY_U)){
             undo_last_move();
