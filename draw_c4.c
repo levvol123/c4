@@ -8,6 +8,16 @@
 #define BOTTOM_PAD_RATIO 0.15f
 #define DISC_RATIO       0.06f
 
+#define LOGICAL_HEIGHT 1000
+#define LOGICAL_WIDTH  1000
+
+#define GRID_OFFSET_X 40
+#define GRID_OFFSET_Y 40
+#define GRID_DOT_SIZE 3.0f
+#define CELL_WALL_LENGTH 90
+
+#define DISC_SIZE 40
+
 typedef struct 
 {
     Vector2 position;
@@ -22,7 +32,8 @@ typedef struct {
     Color disc1;
     Color disc2;
     Color background;
-    Color grid;
+    Color board_grid;
+    Color background_grid;
     Color column_selector;
 } color_palette;
 
@@ -31,98 +42,64 @@ static color_palette themes[NUMBER_OF_THEMES] = {
     .disc1 = RED,
     .disc2 = BLUE,
     .background = WHITE,
-    .grid = BLACK,
+    .board_grid = BLACK,
+    .background_grid = LIGHTGRAY,
     .column_selector = GRAY,
     },
     [DARK] = {
     .disc1 = RED,
     .disc2 = BLUE,
     .background = BLACK,
-    .grid = WHITE,
+    .board_grid = WHITE,
+    .background_grid = LIGHTGRAY,
     .column_selector = WHITE,
     },
     [LIGHT_COLOR] = {
     .disc1 = (Color){0xff, 0x69, 0x78, 0xff},
     .disc2 = (Color){0x34, 0x7f, 0xc4, 0xff},
     .background = (Color){0x6d, 0x43, 0x5a, 0xff},
-    .grid = (Color){0xff, 0xfc, 0xf9, 0xff},
+    .board_grid = (Color){0xff, 0xfc, 0xf9, 0xff},
+    .background_grid = LIGHTGRAY,
     .column_selector = (Color){0xff, 0xe8, 0xd1, 0xff},
     },
 };
 
 color_palette *current_theme;
 
-void draw_background(int width, int height){
-    //ClearBackground(current_theme->background);
-    int left_pad = width * LEFT_PAD_RATIO;
-    int right_pad = width * RIGHT_PAD_RATIO;
-    int top_pad = height * TOP_PAD_RATIO;
-    int bottom_pad = height * BOTTOM_PAD_RATIO;
-    const float radius = 3.0f;
-
-    int grid_width  = width - left_pad - right_pad;
-    int grid_height = height - top_pad - bottom_pad;
-
-    float step_x = grid_width / COLUMNS;
-    float step_y = grid_height / ROWS;
-
-    for (int i = 0; i <= ROWS; i++)
-    {
-        for (int j = 0; j <= COLUMNS; j++)
-        {
-            Vector2 center = {.x = left_pad + step_x*j, .y = top_pad + i *step_y};
-            DrawCircleV(center, radius, current_theme->grid);
+void draw_discs(){
+    for (int i = 0; i < ROWS; i++) {
+        for (int j = 0; j < COLUMNS; j++) {
+            Vector2 center = {.x = (j * CELL_WALL_LENGTH) + GRID_OFFSET_X + (2.5 * CELL_WALL_LENGTH), .y = (i * CELL_WALL_LENGTH) + GRID_OFFSET_Y + (4.5 * CELL_WALL_LENGTH)};
+           
+            if (get_color(i,j) == 1) {
+                DrawCircleV(center, DISC_SIZE, current_theme->disc1);     
+            } else if (get_color(i,j) == 2) {                             
+                DrawCircleV(center, DISC_SIZE, current_theme->disc2); 
+            }
         }
     }
 }
-void draw_discs(int width, int height){
-    int left_pad = width * LEFT_PAD_RATIO;
-    int right_pad = width * RIGHT_PAD_RATIO;
-    int top_pad = height * TOP_PAD_RATIO;
-    int bottom_pad = height * BOTTOM_PAD_RATIO;
-    int grid_width  = width - left_pad - right_pad;
-    int grid_height = height - top_pad - bottom_pad;
-
-    float step_x = grid_width / COLUMNS;
-    float step_y = grid_height / ROWS;
-    for (int i = 0; i < ROWS; i++)
-            {
-                for (int j = 0; j < COLUMNS; j++)
-                {
-                    Vector2 center = {.x = left_pad+step_x/2 + step_x*j, .y = top_pad +step_y/2+ i *step_y};
-                    if (get_color(i,j) == 1)
-                    {
-                        DrawCircleV(center, 40, current_theme->disc1);     
-                    }
-                    else if (get_color(i,j) == 2)
-                    {
-                        DrawCircleV(center, 40, current_theme->disc2);                        
-                    }
-                }
-            }
-}
 
 void draw_grid(){
-    static int steps_x = 1000 / 50;
-    static int steps_y = 1000 / 50;  
+    static int steps_x = LOGICAL_WIDTH  / 50;
+    static int steps_y = LOGICAL_HEIGHT / 50;  
     for (int i = 0; i <= steps_x; i++)
         {
             for (int j = 0; j <= steps_y; j++)
             {
-                if(j > 1 && j < 10 && i > 2 && i < 11){
-                    Vector2 center = {.x = 90*j+40, .y = i *90+40};
-                    DrawCircleV(center, 3.0f, RED);
+                if(j > 1 && j < 10 && i > 3 && i < 11){
+                    Vector2 center = {.x = (j * CELL_WALL_LENGTH) + GRID_OFFSET_X, .y = (i * CELL_WALL_LENGTH) + GRID_OFFSET_Y};
+                    DrawCircleV(center, GRID_DOT_SIZE, current_theme->board_grid); //playing grid
                 } else {
-                    Vector2 center = {.x = 90*j+40, .y = i *90+40};
-                    DrawCircleV(center, 3.0f, BLUE);
+                    Vector2 center = {.x = (j * CELL_WALL_LENGTH) + GRID_OFFSET_X, .y = (i * CELL_WALL_LENGTH) + GRID_OFFSET_Y};
+                    DrawCircleV(center, GRID_DOT_SIZE, current_theme->background_grid); //background grid
                 }
-
             }
         }
 }
-void draw_column_selector(int index, int height, int left_pad, int bottom_pad, float step_x){
-    Vector2 center = {.x = left_pad + step_x*index + 0.1*step_x, .y = height - (bottom_pad * 0.85)};
-    DrawRectangleV(center, (Vector2){.x = 0.8*step_x, .y = 3}, current_theme->column_selector);
+void draw_column_selector(int index){
+    Vector2 center = {.x = (index * CELL_WALL_LENGTH) + GRID_OFFSET_X + (2.1 * CELL_WALL_LENGTH), .y = (10.5 * CELL_WALL_LENGTH) + GRID_OFFSET_Y};
+    DrawRectangleV(center, (Vector2){.x = 0.8*CELL_WALL_LENGTH, .y = 3}, current_theme->column_selector);
 }
 
 void animate_falling_disc(int *play_animation, falling_disc *the_disc, int top_pad, int step_y){
@@ -164,8 +141,6 @@ int main(){
 
     current_theme = &themes[LIGHT];
     init_c4();
-    //SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-    //SetConfigFlags(FLAG_MSAA_4X_HINT);
     SetConfigFlags(FLAG_WINDOW_HIGHDPI | FLAG_WINDOW_RESIZABLE | FLAG_MSAA_4X_HINT);   
     InitWindow(screenWidth, screenHeight, "Connect Four");
 
@@ -224,11 +199,10 @@ int main(){
             ClearBackground(current_theme->background);
             BeginMode2D(camera);
             //----------
-            //draw_background(width, height);
             draw_grid();
             animate_falling_disc(&play_falling_disc_animation, &the_falling_disk, top_pad, step_y);
-            draw_discs(width, height);
-            draw_column_selector(current_column_index, height, left_pad, bottom_pad, step_x);
+            draw_discs();
+            draw_column_selector(current_column_index);
             //---------
             EndMode2D();
 
