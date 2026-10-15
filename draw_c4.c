@@ -23,6 +23,9 @@ typedef struct
 
 typedef enum {LIGHT, DARK, LIGHT_COLOR, NUMBER_OF_THEMES} theme;
 
+typedef enum {MAIN_MENU, LOCAL_MULTIPLAYER} state;
+static state current_scene;
+
 typedef struct {
     Color disc1;
     Color disc2;
@@ -124,8 +127,12 @@ static Camera2D fit_camera(){
     };
 }
 
-int main(){
+void update_local_multiplayer(){
+    
+}
 
+int main(){
+    current_scene = LOCAL_MULTIPLAYER;
     const int screenWidth = 1080;
     const int screenHeight = 1080;
     int current_column_index = 0;
@@ -181,10 +188,20 @@ int main(){
             ClearBackground(current_theme->background);
             BeginMode2D(camera);
             //----------
-            draw_grid();
-            animate_falling_disc(&play_falling_disc_animation, &the_falling_disk);
-            draw_discs();
-            draw_column_selector(current_column_index);
+            switch (current_scene)
+            {
+            case MAIN_MENU:
+                /* code */
+                break;
+            case LOCAL_MULTIPLAYER:
+                draw_grid();
+                animate_falling_disc(&play_falling_disc_animation, &the_falling_disk);
+                draw_discs();
+                draw_column_selector(current_column_index);
+            default:
+                break;
+            }
+            
             //---------
             EndMode2D();
 
