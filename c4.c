@@ -96,18 +96,41 @@ int get_next_row_from_column(int column){
 //     return 0;
 // }  
 
-/* int evaluate_position_on_last_move(int column){
-    int red;
-    int blue;
+int evaluate_position_on_last_move(int column){
+    int player1_count;
+    int player2_count;
     //evaluate row ->start at ---x---
-
-    
-
-
-
+    for (int i = 0; i < COLUMNS; i++)
+    {
+        if(discs[next_disc[column]][i] == DISC_RED){
+            player1_count += 1;
+            if(player1_count == 4){
+                return 1;
+            }
+            player2_count = 0;
+        } else if (discs[next_disc[column]][i] == DISC_BLUE){
+            player2_count += 1;
+            if(player2_count == 4){
+                return 2;
+            }
+            player1_count = 0;
+        } else {
+            player1_count = 0;
+            player2_count = 0;
+        }
+    }
     //evaluate column
-
-    
-    
+    if(next_disc[column] < 4){
+        if(discs[next_disc[column]][column] == DISC_RED && discs[next_disc[column]+1][column] == DISC_RED && 
+        discs[next_disc[column]+2][column] == DISC_RED && discs[next_disc[column]+3][column] == DISC_RED) {
+            return 1;
+        } else if (discs[next_disc[column]][column] == DISC_BLUE && discs[next_disc[column]+1][column] == DISC_BLUE && 
+        discs[next_disc[column]+2][column] == DISC_BLUE && discs[next_disc[column]+3][column] == DISC_BLUE) {
+            return 2;
+        }
+    }
     //evaluate diagonals
-} */
+    
+    return 0;
+
+} 

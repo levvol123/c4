@@ -104,6 +104,7 @@ void animate_falling_disc(int *play_animation, falling_disc *the_disc){
         if(the_disc->position.y >= height){
             *play_animation = 0;
             place_disc(the_disc->column);
+            printf("%d\n", evaluate_position_on_last_move(the_disc->column));
         }
         if(the_disc->player == 1){
             DrawCircleV(the_disc->position, DISC_SIZE, current_theme->disc1);
