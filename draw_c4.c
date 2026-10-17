@@ -147,29 +147,28 @@ void draw_main_menu(int* current_button){
     const Vector2 button3_size= {.x = 300, .y = 100};
 
 
-    switch (*current_button)
-    {
-    case 1:
-        DrawRectangleV(button1_position,button1_size,current_theme->button_color_on_hover);
-        DrawRectangleV(button2_position,button2_size,current_theme->button_color);
-        DrawRectangleV(button3_position,button3_size,current_theme->button_color);
-        break;
-    case 2:
-        DrawRectangleV(button1_position,button1_size,current_theme->button_color);
-        DrawRectangleV(button2_position,button2_size,current_theme->button_color_on_hover);
-        DrawRectangleV(button3_position,button3_size,current_theme->button_color);
-        break;
-    case 3:
-        DrawRectangleV(button1_position,button1_size,current_theme->button_color);
-        DrawRectangleV(button2_position,button2_size,current_theme->button_color);
-        DrawRectangleV(button3_position,button3_size,current_theme->button_color_on_hover);
-        break;
-            
-    default:
-        DrawRectangleV(button1_position,button1_size,current_theme->button_color);
-        DrawRectangleV(button2_position,button2_size,current_theme->button_color);
-        DrawRectangleV(button3_position,button3_size,current_theme->button_color);
-        break;
+    switch (*current_button) {
+        case 1:
+            DrawRectangleV(button1_position,button1_size,current_theme->button_color_on_hover);
+            DrawRectangleV(button2_position,button2_size,current_theme->button_color);
+            DrawRectangleV(button3_position,button3_size,current_theme->button_color);
+            break;
+        case 2:
+            DrawRectangleV(button1_position,button1_size,current_theme->button_color);
+            DrawRectangleV(button2_position,button2_size,current_theme->button_color_on_hover);
+            DrawRectangleV(button3_position,button3_size,current_theme->button_color);
+            break;
+        case 3:
+            DrawRectangleV(button1_position,button1_size,current_theme->button_color);
+            DrawRectangleV(button2_position,button2_size,current_theme->button_color);
+            DrawRectangleV(button3_position,button3_size,current_theme->button_color_on_hover);
+            break;
+
+        default:
+            DrawRectangleV(button1_position,button1_size,current_theme->button_color);
+            DrawRectangleV(button2_position,button2_size,current_theme->button_color);
+            DrawRectangleV(button3_position,button3_size,current_theme->button_color);
+            break;
     }
 }
 void update_main_menu(int* current_button){
@@ -191,9 +190,11 @@ void update_main_menu(int* current_button){
         {
         case 1:
             current_scene = LOCAL_MULTIPLAYER;
+            *current_button = 3;
             break;
         case 2:
             current_scene = ONLINE_MULTIPLAYER;
+            *current_button = 3;
             break;        
         case 3:
             CloseWindow();
