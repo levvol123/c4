@@ -128,17 +128,33 @@ void animate_falling_disc(int *play_animation, falling_disc *the_disc){
         }
     }
 }
+void draw_a_grid(Camera2D cam, float spacing, float offset, float radius, Color color){
+    Vector2 top_left = GetScreenToWorld2D((Vector2){ .x = 0, .y = 0 }, cam);
+    Vector2 bottom_right = GetScreenToWorld2D(
+        (Vector2){ .x = (float)GetScreenWidth(), .y = (float)GetScreenHeight() }, cam);
 
-void draw_main_menu(int* current_button){
-    const int steps = 30;
-    for (int i = 0; i < steps; i++)
-    {
-        for (int j = 0; j < steps; j++)
-        {
-            Vector2 center = {.x = (j * MENU_GRID_LENGTH) + MENU_GRID_OFFSET, .y = (i * MENU_GRID_LENGTH) + MENU_GRID_OFFSET};
-            DrawCircleV(center, MENU_GRID_DOT_RADIUS, current_theme->background_grid);
+    int first_column = (int)floorf((top_left.x - offset) / spacing);
+    int last_column  = (int)ceilf ((bottom_right.x - offset) / spacing);
+    int first_row    = (int)floorf((top_left.y - offset) / spacing);
+    int last_row     = (int)ceilf ((bottom_right.y - offset) / spacing);
+
+    for (int row = first_row; row <= last_row; row++){
+        for (int column = first_column; column <= last_column; column++){
+            DrawCircleV((Vector2){ column * spacing + offset, row * spacing + offset }, radius, color);
         }
     }
+}
+void draw_main_menu(int* current_button, Camera2D camera){
+    // const int steps = 30;
+    // for (int i = 0; i < steps; i++)
+    // {
+    //     for (int j = 0; j < steps; j++)
+    //     {
+    //         Vector2 center = {.x = (j * MENU_GRID_LENGTH) + MENU_GRID_OFFSET, .y = (i * MENU_GRID_LENGTH) + MENU_GRID_OFFSET};
+    //         DrawCircleV(center, MENU_GRID_DOT_RADIUS, current_theme->background_grid);
+    //     }
+    // }
+    draw_a_grid(camera, MENU_GRID_LENGTH, MENU_GRID_OFFSET, MENU_GRID_DOT_RADIUS, current_theme->background_grid);
     const Vector2 button1_position= {.x = MENU_GRID_LENGTH * 2.5, .y = MENU_GRID_LENGTH * 4.5};
     const Vector2 button1_size= {.x = 300, .y = 100};
     const Vector2 button2_position= {.x = MENU_GRID_LENGTH * 2.5, .y = MENU_GRID_LENGTH * 7};
@@ -291,7 +307,7 @@ int main(){
             switch (current_scene)
             {
             case MAIN_MENU:
-                draw_main_menu(&current_column_index);
+                draw_main_menu(&current_column_index, camera);
                 break;
             case LOCAL_MULTIPLAYER:
                 draw_grid();
