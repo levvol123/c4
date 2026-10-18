@@ -27,6 +27,7 @@ typedef enum { LIGHT, DARK, LIGHT_COLOR, NUMBER_OF_THEMES } theme;
 
 typedef enum { MAIN_MENU, LOCAL_MULTIPLAYER, ONLINE_MULTIPLAYER } state;
 static state current_scene;
+Font fontTtf;
 
 typedef struct {
     Color disc1;
@@ -48,8 +49,8 @@ static color_palette themes[NUMBER_OF_THEMES] = {
             .board_grid = BLACK,
             .background_grid = LIGHTGRAY,
             .column_selector = GRAY,
-            .button_color = RED,
-            .button_color_on_hover = BLUE,
+            .button_color = (Color){0x93, 0x86, 0x7f, 0xff},
+            .button_color_on_hover = (Color){0xe9, 0xc4, 0x6a, 0xff},
         },
     [DARK] =
         {
@@ -77,68 +78,7 @@ static color_palette themes[NUMBER_OF_THEMES] = {
 
 color_palette* current_theme;
 
-void draw_discs() {
-    for (int i = 0; i < ROWS; i++) {
-        for (int j = 0; j < COLUMNS; j++) {
-            Vector2 center = {.x = (j * CELL_WALL_LENGTH) + GRID_OFFSET_X +
-                                   (2.5 * CELL_WALL_LENGTH),
-                              .y = (i * CELL_WALL_LENGTH) + GRID_OFFSET_Y +
-                                   (4.5 * CELL_WALL_LENGTH)};
-
-            if (get_color(i, j) == 1) {
-                DrawCircleV(center, DISC_SIZE, current_theme->disc1);
-            } else if (get_color(i, j) == 2) {
-                DrawCircleV(center, DISC_SIZE, current_theme->disc2);
-            }
-        }
-    }
-}
-
-void draw_grid() {
-    static int steps_x = LOGICAL_WIDTH / 50;
-    static int steps_y = LOGICAL_HEIGHT / 50;
-    for (int i = 0; i <= steps_x; i++) {
-        for (int j = 0; j <= steps_y; j++) {
-            if (j > 1 && j < 10 && i > 3 && i < 11) {
-                Vector2 center = {.x = (j * CELL_WALL_LENGTH) + GRID_OFFSET_X,
-                                  .y = (i * CELL_WALL_LENGTH) + GRID_OFFSET_Y};
-                DrawCircleV(center, GRID_DOT_SIZE,
-                            current_theme->board_grid);  // playing grid
-            } else {
-                Vector2 center = {.x = (j * CELL_WALL_LENGTH) + GRID_OFFSET_X,
-                                  .y = (i * CELL_WALL_LENGTH) + GRID_OFFSET_Y};
-                DrawCircleV(center, GRID_DOT_SIZE,
-                            current_theme->background_grid);  // background grid
-            }
-        }
-    }
-}
-void draw_column_selector(int index) {
-    Vector2 center = {.x = (index * CELL_WALL_LENGTH) + GRID_OFFSET_X +
-                           (2.1 * CELL_WALL_LENGTH),
-                      .y = (10.5 * CELL_WALL_LENGTH) + GRID_OFFSET_Y};
-    DrawRectangleV(center, (Vector2){.x = 0.8 * CELL_WALL_LENGTH, .y = 3},
-                   current_theme->column_selector);
-}
-
-void animate_falling_disc(int* play_animation, falling_disc* the_disc) {
-    if (*play_animation == 1) {
-        the_disc->position.y += 1200.0f * GetFrameTime();
-        int height = ((get_next_row_from_column(the_disc->column) - 1) *
-                      CELL_WALL_LENGTH) +
-                     GRID_OFFSET_Y + (4.5 * CELL_WALL_LENGTH);
-        if (the_disc->position.y >= height) {
-            *play_animation = 0;
-            place_disc(the_disc->column);
-            printf("%d\n", evaluate_position_on_last_move(the_disc->column));
-        }
-        if (the_disc->player == 1) {
-            DrawCircleV(the_disc->position, DISC_SIZE, current_theme->disc1);
-        } else {
-            DrawCircleV(the_disc->position, DISC_SIZE, current_theme->disc2);
-        }
-    }
-}
+//----------------------------------------------------------------------------
 void draw_a_grid(Camera2D cam,
                  float spacing,
                  float offset,
@@ -162,18 +102,8 @@ void draw_a_grid(Camera2D cam,
         }
     }
 }
+//----------------------------------------------------------------------------
 void draw_main_menu(int* current_button, Camera2D camera) {
-    // const int steps = 30;
-    // for (int i = 0; i < steps; i++)
-    // {
-    //     for (int j = 0; j < steps; j++)
-    //     {
-    //         Vector2 center = {.x = (j * MENU_GRID_LENGTH) + MENU_GRID_OFFSET,
-    //         .y = (i * MENU_GRID_LENGTH) + MENU_GRID_OFFSET};
-    //         DrawCircleV(center, MENU_GRID_DOT_RADIUS,
-    //         current_theme->background_grid);
-    //     }
-    // }
     draw_a_grid(camera, MENU_GRID_LENGTH, MENU_GRID_OFFSET,
                 MENU_GRID_DOT_RADIUS, current_theme->background_grid);
     const Vector2 button1_position = {.x = MENU_GRID_LENGTH * 2.5,
@@ -194,6 +124,7 @@ void draw_main_menu(int* current_button, Camera2D camera) {
                            current_theme->button_color);
             DrawRectangleV(button3_position, button3_size,
                            current_theme->button_color);
+            DrawTextEx(fontTtf, "Play", button1_position, 48, 2, BLACK);
             break;
         case 2:
             DrawRectangleV(button1_position, button1_size,
@@ -241,11 +172,11 @@ void update_main_menu(int* current_button) {
         switch (*current_button) {
             case 1:
                 current_scene = LOCAL_MULTIPLAYER;
-                *current_button = 3;
+                *current_button = 0;
                 break;
             case 2:
                 current_scene = ONLINE_MULTIPLAYER;
-                *current_button = 3;
+                *current_button = 0;
                 break;
             case 3:
                 CloseWindow();
@@ -255,6 +186,72 @@ void update_main_menu(int* current_button) {
         }
     }
 }
+
+//----------------------------------------------------------------------------
+
+void draw_discs() {
+    for (int i = 0; i < ROWS; i++) {
+        for (int j = 0; j < COLUMNS; j++) {
+            Vector2 center = {.x = (j * CELL_WALL_LENGTH) + GRID_OFFSET_X +
+                                   (2.5 * CELL_WALL_LENGTH),
+                              .y = (i * CELL_WALL_LENGTH) + GRID_OFFSET_Y +
+                                   (4.5 * CELL_WALL_LENGTH)};
+
+            if (get_color(i, j) == 1) {
+                DrawCircleV(center, DISC_SIZE, current_theme->disc1);
+            } else if (get_color(i, j) == 2) {
+                DrawCircleV(center, DISC_SIZE, current_theme->disc2);
+            }
+        }
+    }
+}
+
+void draw_grid() {
+    static int steps_x = LOGICAL_WIDTH / 50;
+    static int steps_y = LOGICAL_HEIGHT / 50;
+    for (int i = 0; i <= steps_x; i++) {
+        for (int j = 0; j <= steps_y; j++) {
+            if (j > 1 && j < 10 && i > 3 && i < 11) {
+                Vector2 center = {.x = (j * CELL_WALL_LENGTH) + GRID_OFFSET_X,
+                                  .y = (i * CELL_WALL_LENGTH) + GRID_OFFSET_Y};
+                DrawCircleV(center, GRID_DOT_SIZE,
+                            current_theme->board_grid);  // playing grid
+            } else {
+                Vector2 center = {.x = (j * CELL_WALL_LENGTH) + GRID_OFFSET_X,
+                                  .y = (i * CELL_WALL_LENGTH) + GRID_OFFSET_Y};
+                DrawCircleV(center, GRID_DOT_SIZE,
+                            current_theme->background_grid);  // background grid
+            }
+        }
+    }
+}
+void draw_column_selector(int index) {
+    Vector2 center = {.x = (index * CELL_WALL_LENGTH) + GRID_OFFSET_X +
+                           (2.1 * CELL_WALL_LENGTH),
+                      .y = (10.5 * CELL_WALL_LENGTH) + GRID_OFFSET_Y};
+    DrawRectangleV(center, (Vector2){.x = 0.8 * CELL_WALL_LENGTH, .y = 3},
+                   current_theme->column_selector);
+}
+
+void animate_falling_disc(bool* play_animation, falling_disc* the_disc) {
+    if (*play_animation == true) {
+        the_disc->position.y += 1200.0f * GetFrameTime();
+        int height = ((get_next_row_from_column(the_disc->column) - 1) *
+                      CELL_WALL_LENGTH) +
+                     GRID_OFFSET_Y + (4.5 * CELL_WALL_LENGTH);
+        if (the_disc->position.y >= height) {
+            *play_animation = false;
+            place_disc(the_disc->column);
+            printf("%d\n", evaluate_position_on_last_move(the_disc->column));
+        }
+        if (the_disc->player == 1) {
+            DrawCircleV(the_disc->position, DISC_SIZE, current_theme->disc1);
+        } else {
+            DrawCircleV(the_disc->position, DISC_SIZE, current_theme->disc2);
+        }
+    }
+}
+
 static Camera2D fit_camera() {
     float sw = GetScreenWidth(), sh = GetScreenHeight();
     float scale = fminf(sw / LOGICAL_WIDTH, sh / LOGICAL_HEIGHT);
@@ -269,7 +266,7 @@ static Camera2D fit_camera() {
 
 void update_local_multiplayer(int* current_column_index,
                               falling_disc* the_falling_disc,
-                              int* play_falling_disc_animation) {
+                              bool* play_falling_disc_animation) {
     if (IsKeyPressed(KEY_U)) {
         undo_last_move();
     } else if (IsKeyPressed(KEY_R)) {
@@ -285,7 +282,7 @@ void update_local_multiplayer(int* current_column_index,
             *current_column_index -= 1;
         }
     } else if (IsKeyPressed(KEY_DOWN)) {
-        if (*play_falling_disc_animation == 0 &&
+        if (*play_falling_disc_animation == false &&
             get_next_row_from_column(*current_column_index) != 0) {
             the_falling_disc->column = *current_column_index;
             the_falling_disc->position =
@@ -293,8 +290,10 @@ void update_local_multiplayer(int* current_column_index,
                                GRID_OFFSET_X + (2.5 * CELL_WALL_LENGTH),
                           .y = GRID_OFFSET_Y + (4.5 * CELL_WALL_LENGTH)};
             the_falling_disc->player = get_current_player();
-            *play_falling_disc_animation = 1;
+            *play_falling_disc_animation = true;
         }
+    } else if (IsKeyPressed(KEY_M)) {
+        current_scene = MAIN_MENU;
     }
 }
 
@@ -303,10 +302,10 @@ int main() {
     const int screenWidth = 620;
     const int screenHeight = 620;
     int current_column_index = 0;
+    int current_button = 0;
 
-    int play_falling_disc_animation = 0;
+    bool play_falling_disc_animation = false;
     falling_disc the_falling_disk = {0};
-
     Camera2D camera = {0};
 
     current_theme = &themes[LIGHT];
@@ -314,14 +313,14 @@ int main() {
     SetConfigFlags(FLAG_WINDOW_HIGHDPI | FLAG_WINDOW_RESIZABLE |
                    FLAG_MSAA_4X_HINT);
     InitWindow(screenWidth, screenHeight, "Connect Four");
-
+    fontTtf = LoadFontEx("Extra/AkzidenzGrotesk.ttf", 192, NULL, 0);
     SetTargetFPS(120);
     //--------------------------------------------------------------------------------------
     // Main game loop
     while (!WindowShouldClose()) {
         switch (current_scene) {
             case MAIN_MENU:
-                update_main_menu(&current_column_index);
+                update_main_menu(&current_button);
                 break;
             case LOCAL_MULTIPLAYER:
                 update_local_multiplayer(&current_column_index,
@@ -345,7 +344,7 @@ int main() {
         //----------
         switch (current_scene) {
             case MAIN_MENU:
-                draw_main_menu(&current_column_index, camera);
+                draw_main_menu(&current_button, camera);
                 break;
             case LOCAL_MULTIPLAYER:
                 draw_grid();
