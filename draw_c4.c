@@ -14,6 +14,9 @@
 #define MENU_GRID_LENGTH 60
 #define MENU_GRID_OFFSET 20
 #define MENU_GRID_DOT_RADIUS 2
+#define MENU_TEXT_OFFSET_X 7
+#define MENU_TEXT_OFFSET_Y 17
+
 
 #define DISC_SIZE 40
 
@@ -81,7 +84,7 @@ color_palette* current_theme;
 static bool should_exit = false;
 //----------------------------------------------------------------------------
 static Camera2D fit_camera() {
-    float sw = GetScreenWidth(), sh = GetScreenHeight();
+    float sw = GetRenderWidth(), sh = GetRenderHeight();
     float scale = fminf(sw / LOGICAL_WIDTH, sh / LOGICAL_HEIGHT);
     return (Camera2D){
         .offset = {(sw - LOGICAL_WIDTH * scale) / 2,
@@ -92,8 +95,7 @@ static Camera2D fit_camera() {
     };
 }
 static void load_font_at_right_size(Camera2D camera, float logical_size) {
-    float real_size = (int)roundf(logical_size * camera.zoom *
-                                  GetWindowScaleDPI().x);  // In pixels
+    int real_size = (int)roundf(logical_size * camera.zoom);  // In pixels
     if (real_size < 1 || real_size == menu_font_size) {
         return;
     }
@@ -104,18 +106,17 @@ static void load_font_at_right_size(Camera2D camera, float logical_size) {
     menu_font_size = real_size;
     SetTextureFilter(menu_font.texture, TEXTURE_FILTER_POINT);
 }
-static void draw_text(Camera2D camera,
-                      Font font,
-                      char* text,
-                      Vector2 logical_position,
-                      Color color) {
-    float dpi = GetWindowScaleDPI().x;
-    Vector2 real_position = GetWorldToScreen2D(logical_position, camera);
-    real_position.x =
-        roundf(real_position.x * dpi) / dpi;  // snap to physical pixels
-    real_position.y = roundf(real_position.y * dpi) / dpi;
-    DrawTextEx(font, text, real_position, menu_font_size / dpi, 0, color);
-}
+// static void draw_text(Camera2D camera,
+//                       Font font,
+//                       char* text,
+//                       Vector2 logical_position,
+//                       Color color) {
+//     Vector2 real_position = GetWorldToScreen2D(logical_position, camera);
+//     real_position.x =
+//         roundf(real_position.x);  // snap to physical pixels
+//     real_position.y = roundf(real_position.y) ;
+//     DrawTextEx(font, text, real_position, menu_font_size, 0, color);
+// }
 void draw_a_grid(Camera2D cam,
                  float spacing,
                  float offset,
@@ -123,7 +124,7 @@ void draw_a_grid(Camera2D cam,
                  Color color) {
     Vector2 top_left = GetScreenToWorld2D((Vector2){.x = 0, .y = 0}, cam);
     Vector2 bottom_right = GetScreenToWorld2D(
-        (Vector2){.x = (float)GetScreenWidth(), .y = (float)GetScreenHeight()},
+        (Vector2){.x = (float)GetRenderWidth(), .y = (float)GetRenderHeight()},
         cam);
 
     int first_column = (int)floorf((top_left.x - offset) / spacing);
@@ -186,38 +187,64 @@ void draw_main_menu(int* current_button, Camera2D camera) {
                 MENU_GRID_DOT_RADIUS, current_theme->background_grid);
     const Vector2 button1_position = {.x = MENU_GRID_LENGTH * 2.5,
                                       .y = MENU_GRID_LENGTH * 4.5};
-    const Vector2 button1_size = {.x = 300, .y = 100};
+    const Vector2 button1_size = {.x = 250, .y = 105};
+    const Vector2 button1_on_hover_size = {.x = 250 * 1.1, .y = 100 * 1.1};
+    const Vector2 button1_text_position = {.x = (MENU_GRID_LENGTH * 2.5) + 5,
+                                           .y = (MENU_GRID_LENGTH * 4.5) + MENU_TEXT_OFFSET_Y};
     const Vector2 button2_position = {.x = MENU_GRID_LENGTH * 2.5,
                                       .y = MENU_GRID_LENGTH * 7};
-    const Vector2 button2_size = {.x = 300, .y = 100};
+    const Vector2 button2_size = {.x = 320, .y = 100};
+    const Vector2 button2_on_hover_size = {.x = 300 * 1.1, .y = 100 * 1.1};
+    const Vector2 button2_text_position = {.x = (MENU_GRID_LENGTH * 2.5) + MENU_TEXT_OFFSET_X,
+                                           .y = (MENU_GRID_LENGTH * 7) + MENU_TEXT_OFFSET_Y};
     const Vector2 button3_position = {.x = MENU_GRID_LENGTH * 2.5,
                                       .y = MENU_GRID_LENGTH * 9.5};
-    const Vector2 button3_size = {.x = 300, .y = 100};
-
+    const Vector2 button3_size = {.x = 230, .y = 100};
+    const Vector2 button3_on_hover_size = {.x = 230 * 1.1, .y = 100 * 1.05};
+    const Vector2 button3_text_position = {.x = (MENU_GRID_LENGTH * 2.5) + MENU_TEXT_OFFSET_X,
+                                           .y = (MENU_GRID_LENGTH * 9.5) + MENU_TEXT_OFFSET_Y};
     switch (*current_button) {
         case 1:
-            DrawRectangleV(button1_position, button1_size,
+            DrawRectangleV(button1_position, button1_on_hover_size,
                            current_theme->button_color_on_hover);
             DrawRectangleV(button2_position, button2_size,
                            current_theme->button_color);
             DrawRectangleV(button3_position, button3_size,
                            current_theme->button_color);
+            DrawTextEx(menu_font, "Play", button1_text_position,
+                       menu_font_size / camera.zoom, 0, BLACK);
+            DrawTextEx(menu_font, "Online", button2_text_position,
+                       menu_font_size / camera.zoom, 0, BLACK);
+            DrawTextEx(menu_font, "Exit", button3_text_position,
+                       menu_font_size / camera.zoom, 0, BLACK);
             break;
         case 2:
             DrawRectangleV(button1_position, button1_size,
                            current_theme->button_color);
-            DrawRectangleV(button2_position, button2_size,
+            DrawRectangleV(button2_position, button2_on_hover_size,
                            current_theme->button_color_on_hover);
             DrawRectangleV(button3_position, button3_size,
                            current_theme->button_color);
+            DrawTextEx(menu_font, "Play", button1_text_position,
+                       menu_font_size / camera.zoom, 0, BLACK);
+            DrawTextEx(menu_font, "Online", button2_text_position,
+                       menu_font_size / camera.zoom, 0, BLACK);
+            DrawTextEx(menu_font, "Exit", button3_text_position,
+                       menu_font_size / camera.zoom, 0, BLACK);
             break;
         case 3:
             DrawRectangleV(button1_position, button1_size,
                            current_theme->button_color);
             DrawRectangleV(button2_position, button2_size,
                            current_theme->button_color);
-            DrawRectangleV(button3_position, button3_size,
+            DrawRectangleV(button3_position, button3_on_hover_size,
                            current_theme->button_color_on_hover);
+            DrawTextEx(menu_font, "Play", button1_text_position,
+                       menu_font_size / camera.zoom, 0, BLACK);
+            DrawTextEx(menu_font, "Online", button2_text_position,
+                       menu_font_size / camera.zoom, 0, BLACK);
+            DrawTextEx(menu_font, "Exit", button3_text_position,
+                       menu_font_size / camera.zoom, 0, BLACK);
             break;
 
         default:
@@ -227,6 +254,12 @@ void draw_main_menu(int* current_button, Camera2D camera) {
                            current_theme->button_color);
             DrawRectangleV(button3_position, button3_size,
                            current_theme->button_color);
+            DrawTextEx(menu_font, "Play", button1_text_position,
+                       menu_font_size / camera.zoom, 0, BLACK);
+            DrawTextEx(menu_font, "Online", button2_text_position,
+                       menu_font_size / camera.zoom, 0, BLACK);
+            DrawTextEx(menu_font, "Exit", button3_text_position,
+                       menu_font_size / camera.zoom, 0, BLACK);
             break;
     }
 }
@@ -374,17 +407,6 @@ int main() {
         }
         //---------
         EndMode2D();
-        switch (current_scene) {
-            case MAIN_MENU:
-                draw_text(camera, menu_font, "Test", (Vector2){500, 500},
-                          BLACK);
-                break;
-            case LOCAL_MULTIPLAYER:
-
-                break;
-            default:
-                break;
-        }
         EndDrawing();
         //     printf("screen %d x %d, render %d x %d, dpi %.2f\n",
         //    GetScreenWidth(), GetScreenHeight(),
@@ -394,6 +416,7 @@ int main() {
     }
     // De-Initialization
     //--------------------------------------------------------------------------------------
+    UnloadFont(menu_font);
     CloseWindow();  // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
     return 0;
