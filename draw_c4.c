@@ -331,6 +331,7 @@ void update_local_multiplayer(int* current_column_index,
                               bool* play_falling_disc_animation) {
     if (IsKeyPressed(KEY_U)) {
         undo_last_move();
+        *play_falling_disc_animation = false;
     } else if (IsKeyPressed(KEY_R)) {
         while (undo_last_move() == 1) {
             ;
