@@ -3,6 +3,14 @@
 #include <stdio.h>
 #include "c4.h"
 
+#define RGBA(r, g, b, a) {r, g, b, a}
+#define C_RED RGBA(230, 41, 55, 255)
+#define C_BLUE RGBA(0, 121, 241, 255)
+#define C_WHITE RGBA(255, 255, 255, 255)
+#define C_BLACK RGBA(0, 0, 0, 255)
+#define C_LIGHTGRAY RGBA(200, 200, 200, 255)
+#define C_GRAY RGBA(130, 130, 130, 255)
+
 #define LOGICAL_HEIGHT 1000
 #define LOGICAL_WIDTH 1000
 
@@ -16,7 +24,6 @@
 #define MENU_GRID_DOT_RADIUS 2
 #define MENU_TEXT_OFFSET_X 7
 #define MENU_TEXT_OFFSET_Y 17
-
 
 #define DISC_SIZE 40
 
@@ -47,36 +54,36 @@ typedef struct {
 static color_palette themes[NUMBER_OF_THEMES] = {
     [LIGHT] =
         {
-            .disc1 = RED,
-            .disc2 = BLUE,
-            .background = WHITE,
-            .board_grid = BLACK,
-            .background_grid = LIGHTGRAY,
-            .column_selector = GRAY,
-            .button_color = (Color){0x93, 0x86, 0x7f, 0xff},
-            .button_color_on_hover = (Color){0xe9, 0xc4, 0x6a, 0xff},
+            .disc1 = C_RED,
+            .disc2 = C_BLUE,
+            .background = C_WHITE,
+            .board_grid = C_BLACK,
+            .background_grid = C_LIGHTGRAY,
+            .column_selector = C_GRAY,
+            .button_color = RGBA(0x93, 0x86, 0x7f, 0xff),
+            .button_color_on_hover = RGBA(0xe9, 0xc4, 0x6a, 0xff),
         },
     [DARK] =
         {
-            .disc1 = RED,
-            .disc2 = BLUE,
-            .background = BLACK,
-            .board_grid = WHITE,
-            .background_grid = LIGHTGRAY,
-            .column_selector = WHITE,
-            .button_color = RED,
-            .button_color_on_hover = BLUE,
+            .disc1 = C_RED,
+            .disc2 = C_BLUE,
+            .background = C_BLACK,
+            .board_grid = C_WHITE,
+            .background_grid = C_LIGHTGRAY,
+            .column_selector = C_WHITE,
+            .button_color = C_RED,
+            .button_color_on_hover = C_BLUE,
         },
     [LIGHT_COLOR] =
         {
-            .disc1 = (Color){0xff, 0x69, 0x78, 0xff},
-            .disc2 = (Color){0x34, 0x7f, 0xc4, 0xff},
-            .background = (Color){0x6d, 0x43, 0x5a, 0xff},
-            .board_grid = (Color){0xff, 0xfc, 0xf9, 0xff},
-            .background_grid = LIGHTGRAY,
-            .column_selector = (Color){0xff, 0xe8, 0xd1, 0xff},
-            .button_color = (Color){0x93, 0x86, 0x7f, 0xff},
-            .button_color_on_hover = (Color){0xe9, 0xc4, 0x6a, 0xff},
+            .disc1 = RGBA(0xff, 0x69, 0x78, 0xff),
+            .disc2 = RGBA(0x34, 0x7f, 0xc4, 0xff),
+            .background = RGBA(0x6d, 0x43, 0x5a, 0xff),
+            .board_grid = RGBA(0xff, 0xfc, 0xf9, 0xff),
+            .background_grid = C_LIGHTGRAY,
+            .column_selector = RGBA(0xff, 0xe8, 0xd1, 0xff),
+            .button_color = RGBA(0x93, 0x86, 0x7f, 0xff),
+            .button_color_on_hover = RGBA(0xe9, 0xc4, 0x6a, 0xff),
         },
 };
 
@@ -189,20 +196,23 @@ void draw_main_menu(int* current_button, Camera2D camera) {
                                       .y = MENU_GRID_LENGTH * 4.5};
     const Vector2 button1_size = {.x = 250, .y = 105};
     const Vector2 button1_on_hover_size = {.x = 250 * 1.1, .y = 100 * 1.1};
-    const Vector2 button1_text_position = {.x = (MENU_GRID_LENGTH * 2.5) + 5,
-                                           .y = (MENU_GRID_LENGTH * 4.5) + MENU_TEXT_OFFSET_Y};
+    const Vector2 button1_text_position = {
+        .x = (MENU_GRID_LENGTH * 2.5) + 5,
+        .y = (MENU_GRID_LENGTH * 4.5) + MENU_TEXT_OFFSET_Y};
     const Vector2 button2_position = {.x = MENU_GRID_LENGTH * 2.5,
                                       .y = MENU_GRID_LENGTH * 7};
     const Vector2 button2_size = {.x = 320, .y = 100};
     const Vector2 button2_on_hover_size = {.x = 300 * 1.1, .y = 100 * 1.1};
-    const Vector2 button2_text_position = {.x = (MENU_GRID_LENGTH * 2.5) + MENU_TEXT_OFFSET_X,
-                                           .y = (MENU_GRID_LENGTH * 7) + MENU_TEXT_OFFSET_Y};
+    const Vector2 button2_text_position = {
+        .x = (MENU_GRID_LENGTH * 2.5) + MENU_TEXT_OFFSET_X,
+        .y = (MENU_GRID_LENGTH * 7) + MENU_TEXT_OFFSET_Y};
     const Vector2 button3_position = {.x = MENU_GRID_LENGTH * 2.5,
                                       .y = MENU_GRID_LENGTH * 9.5};
     const Vector2 button3_size = {.x = 230, .y = 100};
     const Vector2 button3_on_hover_size = {.x = 230 * 1.1, .y = 100 * 1.05};
-    const Vector2 button3_text_position = {.x = (MENU_GRID_LENGTH * 2.5) + MENU_TEXT_OFFSET_X,
-                                           .y = (MENU_GRID_LENGTH * 9.5) + MENU_TEXT_OFFSET_Y};
+    const Vector2 button3_text_position = {
+        .x = (MENU_GRID_LENGTH * 2.5) + MENU_TEXT_OFFSET_X,
+        .y = (MENU_GRID_LENGTH * 9.5) + MENU_TEXT_OFFSET_Y};
     switch (*current_button) {
         case 1:
             DrawRectangleV(button1_position, button1_on_hover_size,
