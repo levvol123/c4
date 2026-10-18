@@ -71,13 +71,13 @@ static color_palette themes[NUMBER_OF_THEMES] = {
             .board_grid = (Color){0xff, 0xfc, 0xf9, 0xff},
             .background_grid = LIGHTGRAY,
             .column_selector = (Color){0xff, 0xe8, 0xd1, 0xff},
-            .button_color = (Color){0xff, 0xe8, 0xd1, 0xff},
-            .button_color_on_hover = BLUE,
+            .button_color = (Color){0x93, 0x86, 0x7f, 0xff},
+            .button_color_on_hover = (Color){0xe9, 0xc4, 0x6a, 0xff},
         },
 };
 
 color_palette* current_theme;
-
+static bool should_exit = false;
 //----------------------------------------------------------------------------
 static Camera2D fit_camera() {
     float sw = GetScreenWidth(), sh = GetScreenHeight();
@@ -231,7 +231,7 @@ void update_main_menu(int* current_button) {
                 *current_button = 0;
                 break;
             case 3:
-                CloseWindow();
+                should_exit = true;
                 break;
             default:
                 break;
@@ -311,7 +311,7 @@ int main() {
     SetTargetFPS(120);
     //--------------------------------------------------------------------------------------
     // Main game loop
-    while (!WindowShouldClose()) {
+    while (!WindowShouldClose() && !should_exit) {
         switch (current_scene) {
             case MAIN_MENU:
                 update_main_menu(&current_button);
