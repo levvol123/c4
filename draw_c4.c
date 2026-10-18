@@ -27,7 +27,8 @@ typedef enum { LIGHT, DARK, LIGHT_COLOR, NUMBER_OF_THEMES } theme;
 
 typedef enum { MAIN_MENU, LOCAL_MULTIPLAYER, ONLINE_MULTIPLAYER } state;
 static state current_scene;
-Font fontTtf;
+Font menu_font;
+int menu_font_size;
 
 typedef struct {
     Color disc1;
@@ -89,6 +90,31 @@ static Camera2D fit_camera() {
         .rotation = 0,
         .zoom = scale,
     };
+}
+static void load_font_at_right_size(Camera2D camera, float logical_size) {
+    float real_size = (int)roundf(logical_size * camera.zoom *
+                                  GetWindowScaleDPI().x);  // In pixels
+    if (real_size < 1 || real_size == menu_font_size) {
+        return;
+    }
+    if (menu_font_size > 0) {
+        UnloadFont(menu_font);
+    }
+    menu_font = LoadFontEx("Extra/AkzidenzGrotesk.ttf", real_size, NULL, 0);
+    menu_font_size = real_size;
+    SetTextureFilter(menu_font.texture, TEXTURE_FILTER_POINT);
+}
+static void draw_text(Camera2D camera,
+                      Font font,
+                      char* text,
+                      Vector2 logical_position,
+                      Color color) {
+    float dpi = GetWindowScaleDPI().x;
+    Vector2 real_position = GetWorldToScreen2D(logical_position, camera);
+    real_position.x =
+        roundf(real_position.x * dpi) / dpi;  // snap to physical pixels
+    real_position.y = roundf(real_position.y * dpi) / dpi;
+    DrawTextEx(font, text, real_position, menu_font_size / dpi, 0, color);
 }
 void draw_a_grid(Camera2D cam,
                  float spacing,
@@ -176,7 +202,6 @@ void draw_main_menu(int* current_button, Camera2D camera) {
                            current_theme->button_color);
             DrawRectangleV(button3_position, button3_size,
                            current_theme->button_color);
-            DrawTextEx(fontTtf, "Play", button1_position, 48, 2, BLACK);
             break;
         case 2:
             DrawRectangleV(button1_position, button1_size,
@@ -307,7 +332,6 @@ int main() {
     SetConfigFlags(FLAG_WINDOW_HIGHDPI | FLAG_WINDOW_RESIZABLE |
                    FLAG_MSAA_4X_HINT);
     InitWindow(screenWidth, screenHeight, "Connect Four");
-    fontTtf = LoadFontEx("Extra/AkzidenzGrotesk.ttf", 192, NULL, 0);
     SetTargetFPS(120);
     //--------------------------------------------------------------------------------------
     // Main game loop
@@ -332,6 +356,7 @@ int main() {
             current_theme = &themes[LIGHT_COLOR];
         }
         camera = fit_camera();
+        load_font_at_right_size(camera, 80);
         BeginDrawing();
         ClearBackground(current_theme->background);
         BeginMode2D(camera);
@@ -347,11 +372,24 @@ int main() {
             default:
                 break;
         }
-
         //---------
         EndMode2D();
+        switch (current_scene) {
+            case MAIN_MENU:
+                draw_text(camera, menu_font, "Test", (Vector2){500, 500},
+                          BLACK);
+                break;
+            case LOCAL_MULTIPLAYER:
 
+                break;
+            default:
+                break;
+        }
         EndDrawing();
+        //     printf("screen %d x %d, render %d x %d, dpi %.2f\n",
+        //    GetScreenWidth(), GetScreenHeight(),
+        //    GetRenderWidth(), GetRenderHeight(),
+        //    GetWindowScaleDPI().x);
         //----------------------------------------------------------------------------------
     }
     // De-Initialization
