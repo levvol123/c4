@@ -3,7 +3,8 @@
 #include <stdio.h>
 #include "c4.h"
 
-#define RGBA(r, g, b, a) {r, g, b, a}
+#define RGBA(r, g, b, a) \
+    { r, g, b, a }
 #define C_RED RGBA(230, 41, 55, 255)
 #define C_BLUE RGBA(0, 121, 241, 255)
 #define C_WHITE RGBA(255, 255, 255, 255)
@@ -34,8 +35,15 @@ typedef struct {
 } falling_disc;
 
 typedef enum { LIGHT, DARK, LIGHT_COLOR, NUMBER_OF_THEMES } theme;
+typedef enum { DRAW, PLAYER_1_WIN, PLAYER_2_WIN } result;
 
-typedef enum { MAIN_MENU, LOCAL_MULTIPLAYER, ONLINE_MULTIPLAYER, GAME_DONE} state;
+typedef enum {
+    MAIN_MENU,
+    LOCAL_MULTIPLAYER,
+    ONLINE_MULTIPLAYER,
+    GAME_DONE
+} state;
+static result latest_result;
 static state current_scene;
 Font menu_font;
 int menu_font_size;
@@ -156,10 +164,24 @@ void animate_falling_disc(bool* play_animation, falling_disc* the_disc) {
         if (the_disc->position.y >= height) {
             *play_animation = false;
             place_disc(the_disc->column);
-            if(evaluate_position_on_last_move(the_disc->column) != 0){
-                current_scene = GAME_DONE;
+
+            switch (evaluate_position_on_last_move(the_disc->column)) {
+                case 1:
+                    current_scene = GAME_DONE;
+                    latest_result = PLAYER_1_WIN;
+                    break;
+                case 2:
+                    current_scene = GAME_DONE;
+                    latest_result = PLAYER_2_WIN;
+                    break;
+                case 3:
+                    current_scene = GAME_DONE;
+                    latest_result = DRAW;
+                    break;
+                default:
+                    break;
             }
-            //printf("%d\n", evaluate_position_on_last_move(the_disc->column));
+            // printf("%d\n", evaluate_position_on_last_move(the_disc->column));
         }
         if (the_disc->player == 1) {
             DrawCircleV(the_disc->position, DISC_SIZE, current_theme->disc1);
@@ -277,9 +299,6 @@ void draw_main_menu(int* current_button, Camera2D camera) {
     }
 }
 void update_main_menu(int* current_button) {
-    if (IsKeyPressed(KEY_N)) {
-        current_scene = LOCAL_MULTIPLAYER;
-    }
     if (IsKeyPressed(KEY_DOWN)) {
         *current_button += 1;
         if (*current_button == 4) {
@@ -363,7 +382,8 @@ void update_local_multiplayer(int* current_column_index,
     }
 }
 
-void draw_game_end(Camera2D camera){
+//----------------------------------------------------------------------------
+void draw_game_end(Camera2D camera) {
     draw_a_grid(camera, CELL_WALL_LENGTH, GRID_OFFSET_X, GRID_DOT_SIZE,
                 current_theme->background_grid);
     for (int i = 4; i < 11; i++) {  // playing grid
@@ -405,7 +425,7 @@ int main() {
                                          &the_falling_disk,
                                          &play_falling_disc_animation);
             case GAME_DONE:
-                    break;
+                break;
             default:
                 break;
         }
