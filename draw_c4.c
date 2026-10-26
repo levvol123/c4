@@ -35,7 +35,7 @@ typedef struct {
 
 typedef enum { LIGHT, DARK, LIGHT_COLOR, NUMBER_OF_THEMES } theme;
 
-typedef enum { MAIN_MENU, LOCAL_MULTIPLAYER, ONLINE_MULTIPLAYER } state;
+typedef enum { MAIN_MENU, LOCAL_MULTIPLAYER, ONLINE_MULTIPLAYER, GAME_DONE} state;
 static state current_scene;
 Font menu_font;
 int menu_font_size;
@@ -156,7 +156,10 @@ void animate_falling_disc(bool* play_animation, falling_disc* the_disc) {
         if (the_disc->position.y >= height) {
             *play_animation = false;
             place_disc(the_disc->column);
-            printf("%d\n", evaluate_position_on_last_move(the_disc->column));
+            if(evaluate_position_on_last_move(the_disc->column) != 0){
+                current_scene = GAME_DONE;
+            }
+            //printf("%d\n", evaluate_position_on_last_move(the_disc->column));
         }
         if (the_disc->player == 1) {
             DrawCircleV(the_disc->position, DISC_SIZE, current_theme->disc1);
@@ -360,11 +363,24 @@ void update_local_multiplayer(int* current_column_index,
     }
 }
 
+void draw_game_end(Camera2D camera){
+    draw_a_grid(camera, CELL_WALL_LENGTH, GRID_OFFSET_X, GRID_DOT_SIZE,
+                current_theme->background_grid);
+    for (int i = 4; i < 11; i++) {  // playing grid
+        for (int j = 2; j < 10; j++) {
+            Vector2 center = {.x = (j * CELL_WALL_LENGTH) + GRID_OFFSET_X,
+                              .y = (i * CELL_WALL_LENGTH) + GRID_OFFSET_Y};
+            DrawCircleV(center, GRID_DOT_SIZE, current_theme->board_grid);
+        }
+    }
+    draw_discs();
+}
+
 int main() {
     current_scene = MAIN_MENU;
     const int screenWidth = 620;
     const int screenHeight = 620;
-    int current_column_index = 0;
+    int current_column_index = 3;
     int current_button = 0;
 
     bool play_falling_disc_animation = false;
@@ -388,6 +404,8 @@ int main() {
                 update_local_multiplayer(&current_column_index,
                                          &the_falling_disk,
                                          &play_falling_disc_animation);
+            case GAME_DONE:
+                    break;
             default:
                 break;
         }
@@ -413,6 +431,8 @@ int main() {
                 draw_local_multiplayer(camera, &play_falling_disc_animation,
                                        &the_falling_disk, current_column_index);
                 break;
+            case GAME_DONE:
+                draw_game_end(camera);
             default:
                 break;
         }
