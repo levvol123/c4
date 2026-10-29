@@ -39,6 +39,7 @@ typedef enum { DRAW, PLAYER_1_WIN, PLAYER_2_WIN } result;
 
 typedef enum {
     MAIN_MENU,
+    ANIMATED_TRANSITION,
     LOCAL_MULTIPLAYER,
     ONLINE_MULTIPLAYER,
     GAME_DONE
@@ -155,7 +156,10 @@ void draw_a_grid(Camera2D cam,
         }
     }
 }
-void animate_falling_disc(bool* play_animation, falling_disc* the_disc) {
+void animate_falling_disc(bool* play_animation,
+                          falling_disc* the_disc,
+                          int player_1_score,
+                          int player_2_score) {
     if (*play_animation == true) {
         the_disc->position.y += 1200.0f * GetFrameTime();
         int height = ((get_next_row_from_column(the_disc->column) - 1) *
@@ -169,10 +173,12 @@ void animate_falling_disc(bool* play_animation, falling_disc* the_disc) {
                 case 1:
                     current_scene = GAME_DONE;
                     latest_result = PLAYER_1_WIN;
+                    player_1_score += 1;
                     break;
                 case 2:
                     current_scene = GAME_DONE;
                     latest_result = PLAYER_2_WIN;
+                    player_2_score += 1;
                     break;
                 case 3:
                     current_scene = GAME_DONE;
@@ -213,6 +219,34 @@ void draw_column_selector(int index) {
     DrawRectangleV(center, (Vector2){.x = 0.8 * CELL_WALL_LENGTH, .y = 3},
                    current_theme->column_selector);
 }
+float linear_interpolation(float start, float end, float amount) {
+    return start + amount * (end - start);
+}
+bool animate_grid_transform(Camera2D camera,
+                            float initial_size,
+                            float final_size,
+                            float initial_offset,
+                            float final_offset,
+                            float initial_dot_size,
+                            float final_dot_size,
+                            float time_s) {
+    static float elapsed = 0.0f;
+    elapsed += GetFrameTime();
+    float norm_elapsed = elapsed / time_s;
+    if (norm_elapsed > 1.0f) {
+        norm_elapsed = 1.0f;
+    }
+    if (elapsed >= time_s) {
+        elapsed = 0.0f;
+        return true;
+    }
+    draw_a_grid(
+        camera, linear_interpolation(initial_size, final_size, norm_elapsed),
+        linear_interpolation(initial_offset, final_offset, norm_elapsed),
+        linear_interpolation(initial_dot_size, final_dot_size, norm_elapsed),
+        current_theme->background_grid);
+    return false;
+}
 //----------------------------------------------------------------------------
 void draw_main_menu(int* current_button, Camera2D camera) {
     draw_a_grid(camera, MENU_GRID_LENGTH, MENU_GRID_OFFSET,
@@ -227,7 +261,7 @@ void draw_main_menu(int* current_button, Camera2D camera) {
     const Vector2 button2_position = {.x = MENU_GRID_LENGTH * 2.5,
                                       .y = MENU_GRID_LENGTH * 7};
     const Vector2 button2_size = {.x = 320, .y = 100};
-    const Vector2 button2_on_hover_size = {.x = 300 * 1.1, .y = 100 * 1.1};
+    const Vector2 button2_on_hover_size = {.x = 300 * 1.1, .y = 100 * 1.05};
     const Vector2 button2_text_position = {
         .x = (MENU_GRID_LENGTH * 2.5) + MENU_TEXT_OFFSET_X,
         .y = (MENU_GRID_LENGTH * 7) + MENU_TEXT_OFFSET_Y};
@@ -313,7 +347,7 @@ void update_main_menu(int* current_button) {
                IsKeyPressed(KEY_ENTER)) {
         switch (*current_button) {
             case 1:
-                current_scene = LOCAL_MULTIPLAYER;
+                current_scene = ANIMATED_TRANSITION;
                 *current_button = 0;
                 break;
             case 2:
@@ -333,7 +367,9 @@ void update_main_menu(int* current_button) {
 void draw_local_multiplayer(Camera2D camera,
                             bool* play_falling_disc_animation,
                             falling_disc* the_falling_disc,
-                            int column) {
+                            int column,
+                            int player_1_score,
+                            int player_2_score) {
     draw_a_grid(camera, CELL_WALL_LENGTH, GRID_OFFSET_X, GRID_DOT_SIZE,
                 current_theme->background_grid);
     for (int i = 4; i < 11; i++) {  // playing grid
@@ -343,7 +379,8 @@ void draw_local_multiplayer(Camera2D camera,
             DrawCircleV(center, GRID_DOT_SIZE, current_theme->board_grid);
         }
     }
-    animate_falling_disc(play_falling_disc_animation, the_falling_disc);
+    animate_falling_disc(play_falling_disc_animation, the_falling_disc,
+                         player_1_score, player_2_score);
     draw_discs();
     draw_column_selector(column);
 }
@@ -395,6 +432,15 @@ void draw_game_end(Camera2D camera) {
     }
     draw_discs();
 }
+void update_game_end() {
+    if (IsKeyPressed(KEY_SPACE)) {
+        while (undo_last_move() == 1) {  // reset board
+            ;
+        }
+        current_scene = LOCAL_MULTIPLAYER;
+    }
+}
+//----------------------------------------------------------------------------
 
 int main() {
     current_scene = MAIN_MENU;
@@ -402,6 +448,9 @@ int main() {
     const int screenHeight = 620;
     int current_column_index = 3;
     int current_button = 0;
+
+    int player_1_score = 0;
+    int player_2_score = 0;
 
     bool play_falling_disc_animation = false;
     falling_disc the_falling_disk = {0};
@@ -424,7 +473,9 @@ int main() {
                 update_local_multiplayer(&current_column_index,
                                          &the_falling_disk,
                                          &play_falling_disc_animation);
+                break;
             case GAME_DONE:
+                update_game_end();
                 break;
             default:
                 break;
@@ -447,12 +498,22 @@ int main() {
             case MAIN_MENU:
                 draw_main_menu(&current_button, camera);
                 break;
+            case ANIMATED_TRANSITION:
+                if (animate_grid_transform(camera, MENU_GRID_LENGTH,
+                                           CELL_WALL_LENGTH, MENU_GRID_OFFSET,
+                                           GRID_OFFSET_X, MENU_GRID_DOT_RADIUS,
+                                           GRID_DOT_SIZE, 0.3f)) {
+                    current_scene = LOCAL_MULTIPLAYER;
+                }
+                break;
             case LOCAL_MULTIPLAYER:
                 draw_local_multiplayer(camera, &play_falling_disc_animation,
-                                       &the_falling_disk, current_column_index);
+                                       &the_falling_disk, current_column_index,
+                                       player_1_score, player_2_score);
                 break;
             case GAME_DONE:
                 draw_game_end(camera);
+                break;
             default:
                 break;
         }
