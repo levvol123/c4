@@ -26,6 +26,8 @@
 #define MENU_TEXT_OFFSET_X 7
 #define MENU_TEXT_OFFSET_Y 17
 
+#define ANIMATION_START_BIAS 200
+
 #define DISC_SIZE 40
 
 typedef struct {
@@ -46,8 +48,8 @@ typedef enum {
 } state;
 static result latest_result;
 static state current_scene;
-Font menu_font;
-int menu_font_size;
+static Font menu_font;
+static int menu_font_size;
 
 typedef struct {
     Color disc1;
@@ -96,7 +98,7 @@ static color_palette themes[NUMBER_OF_THEMES] = {
         },
 };
 
-color_palette* current_theme;
+static color_palette* current_theme;
 static bool should_exit = false;
 //----------------------------------------------------------------------------
 static Camera2D fit_camera() {
@@ -133,33 +135,34 @@ static void load_font_at_right_size(Camera2D camera, float logical_size) {
 //     real_position.y = roundf(real_position.y) ;
 //     DrawTextEx(font, text, real_position, menu_font_size, 0, color);
 // }
-void draw_a_grid(Camera2D cam,
-                 float spacing,
-                 float offset,
-                 float radius,
-                 Color color) {
+static void draw_a_grid(Camera2D cam,
+                        float spacing,
+                        float offset_x,
+                        float offset_y,
+                        float radius,
+                        Color color) {
     Vector2 top_left = GetScreenToWorld2D((Vector2){.x = 0, .y = 0}, cam);
     Vector2 bottom_right = GetScreenToWorld2D(
         (Vector2){.x = (float)GetRenderWidth(), .y = (float)GetRenderHeight()},
         cam);
 
-    int first_column = (int)floorf((top_left.x - offset) / spacing);
-    int last_column = (int)ceilf((bottom_right.x - offset) / spacing);
-    int first_row = (int)floorf((top_left.y - offset) / spacing);
-    int last_row = (int)ceilf((bottom_right.y - offset) / spacing);
+    int first_column = (int)floorf((top_left.x - offset_x) / spacing);
+    int last_column = (int)ceilf((bottom_right.x - offset_x) / spacing);
+    int first_row = (int)floorf((top_left.y - offset_y) / spacing);
+    int last_row = (int)ceilf((bottom_right.y - offset_y) / spacing);
 
     for (int row = first_row; row <= last_row; row++) {
         for (int column = first_column; column <= last_column; column++) {
-            DrawCircleV(
-                (Vector2){column * spacing + offset, row * spacing + offset},
-                radius, color);
+            DrawCircleV((Vector2){column * spacing + offset_x,
+                                  row * spacing + offset_y},
+                        radius, color);
         }
     }
 }
-void animate_falling_disc(bool* play_animation,
-                          falling_disc* the_disc,
-                          int player_1_score,
-                          int player_2_score) {
+static void animate_falling_disc(bool* play_animation,
+                                 falling_disc* the_disc,
+                                 int* player_1_score,
+                                 int* player_2_score) {
     if (*play_animation == true) {
         the_disc->position.y += 1200.0f * GetFrameTime();
         int height = ((get_next_row_from_column(the_disc->column) - 1) *
@@ -173,12 +176,12 @@ void animate_falling_disc(bool* play_animation,
                 case 1:
                     current_scene = GAME_DONE;
                     latest_result = PLAYER_1_WIN;
-                    player_1_score += 1;
+                    *player_1_score += 1;
                     break;
                 case 2:
                     current_scene = GAME_DONE;
                     latest_result = PLAYER_2_WIN;
-                    player_2_score += 1;
+                    *player_2_score += 1;
                     break;
                 case 3:
                     current_scene = GAME_DONE;
@@ -196,7 +199,7 @@ void animate_falling_disc(bool* play_animation,
         }
     }
 }
-void draw_discs() {
+static void draw_discs() {
     for (int i = 0; i < ROWS; i++) {
         for (int j = 0; j < COLUMNS; j++) {
             Vector2 center = {.x = (j * CELL_WALL_LENGTH) + GRID_OFFSET_X +
@@ -212,44 +215,79 @@ void draw_discs() {
         }
     }
 }
-void draw_column_selector(int index) {
+static void draw_column_selector(int index) {
     Vector2 center = {.x = (index * CELL_WALL_LENGTH) + GRID_OFFSET_X +
                            (2.1 * CELL_WALL_LENGTH),
                       .y = (10.5 * CELL_WALL_LENGTH) + GRID_OFFSET_Y};
     DrawRectangleV(center, (Vector2){.x = 0.8 * CELL_WALL_LENGTH, .y = 3},
                    current_theme->column_selector);
 }
-float linear_interpolation(float start, float end, float amount) {
+//----------------------------------------------------------------------------
+static float linear_interpolation(float start, float end, float amount) {
     return start + amount * (end - start);
 }
-bool animate_grid_transform(Camera2D camera,
-                            float initial_size,
-                            float final_size,
-                            float initial_offset,
-                            float final_offset,
-                            float initial_dot_size,
-                            float final_dot_size,
-                            float time_s) {
+static float zoom_offset(float anchor,
+                         float initial_size,
+                         float final_size,
+                         float initial_offset,
+                         float final_offset,
+                         float spacing,
+                         float progress) {
+    float scaled_end =
+        anchor + (initial_offset - anchor) *
+                     (final_size / initial_size);  // claude helped
+    float correction = final_offset - scaled_end;
+    correction -= final_size * roundf(correction / final_size);
+
+    return anchor + (initial_offset - anchor) * (spacing / initial_size) +
+           correction * progress;
+}
+static bool animate_grid_transform(Camera2D camera,
+                                   float initial_size,
+                                   float final_size,
+                                   float initial_offset,
+                                   float final_offset,
+                                   float initial_dot_size,
+                                   float final_dot_size,
+                                   float time_s,
+                                   float wait_s) {
     static float elapsed = 0.0f;
+    static Vector2 anchor_point;
+    if (elapsed == 0.0f) {
+        anchor_point.x =
+            (float)GetRandomValue(0, LOGICAL_WIDTH / 2 - ANIMATION_START_BIAS) +
+            (LOGICAL_WIDTH / 2 + ANIMATION_START_BIAS) * GetRandomValue(0, 1);
+        anchor_point.y =
+            (float)GetRandomValue(0,
+                                  LOGICAL_HEIGHT / 2 - ANIMATION_START_BIAS) +
+            (LOGICAL_HEIGHT / 2 + ANIMATION_START_BIAS) * GetRandomValue(0, 1);
+    }
     elapsed += GetFrameTime();
     float norm_elapsed = elapsed / time_s;
     if (norm_elapsed > 1.0f) {
         norm_elapsed = 1.0f;
     }
-    if (elapsed >= time_s) {
+    float spacing =
+        linear_interpolation(initial_size, final_size, norm_elapsed);
+    float offset_x =
+        zoom_offset(anchor_point.x, initial_size, final_size, initial_offset,
+                    final_offset, spacing, norm_elapsed);
+    float offset_y =
+        zoom_offset(anchor_point.y, initial_size, final_size, initial_offset,
+                    final_offset, spacing, norm_elapsed);
+    float dot_size =
+        linear_interpolation(initial_dot_size, final_dot_size, norm_elapsed);
+    draw_a_grid(camera, spacing, offset_x, offset_y, dot_size,
+                current_theme->background_grid);
+    if (elapsed >= time_s + wait_s) {
         elapsed = 0.0f;
         return true;
     }
-    draw_a_grid(
-        camera, linear_interpolation(initial_size, final_size, norm_elapsed),
-        linear_interpolation(initial_offset, final_offset, norm_elapsed),
-        linear_interpolation(initial_dot_size, final_dot_size, norm_elapsed),
-        current_theme->background_grid);
     return false;
 }
 //----------------------------------------------------------------------------
-void draw_main_menu(int* current_button, Camera2D camera) {
-    draw_a_grid(camera, MENU_GRID_LENGTH, MENU_GRID_OFFSET,
+static void draw_main_menu(int* current_button, Camera2D camera) {
+    draw_a_grid(camera, MENU_GRID_LENGTH, MENU_GRID_OFFSET, MENU_GRID_OFFSET,
                 MENU_GRID_DOT_RADIUS, current_theme->background_grid);
     const Vector2 button1_position = {.x = MENU_GRID_LENGTH * 2.5,
                                       .y = MENU_GRID_LENGTH * 4.5};
@@ -332,7 +370,7 @@ void draw_main_menu(int* current_button, Camera2D camera) {
             break;
     }
 }
-void update_main_menu(int* current_button) {
+static void update_main_menu(int* current_button) {
     if (IsKeyPressed(KEY_DOWN)) {
         *current_button += 1;
         if (*current_button == 4) {
@@ -364,14 +402,14 @@ void update_main_menu(int* current_button) {
 }
 
 //----------------------------------------------------------------------------
-void draw_local_multiplayer(Camera2D camera,
-                            bool* play_falling_disc_animation,
-                            falling_disc* the_falling_disc,
-                            int column,
-                            int player_1_score,
-                            int player_2_score) {
-    draw_a_grid(camera, CELL_WALL_LENGTH, GRID_OFFSET_X, GRID_DOT_SIZE,
-                current_theme->background_grid);
+static void draw_local_multiplayer(Camera2D camera,
+                                   bool* play_falling_disc_animation,
+                                   falling_disc* the_falling_disc,
+                                   int column,
+                                   int player_1_score,
+                                   int player_2_score) {
+    draw_a_grid(camera, CELL_WALL_LENGTH, GRID_OFFSET_X, GRID_OFFSET_Y,
+                GRID_DOT_SIZE, current_theme->background_grid);
     for (int i = 4; i < 11; i++) {  // playing grid
         for (int j = 2; j < 10; j++) {
             Vector2 center = {.x = (j * CELL_WALL_LENGTH) + GRID_OFFSET_X,
@@ -380,14 +418,14 @@ void draw_local_multiplayer(Camera2D camera,
         }
     }
     animate_falling_disc(play_falling_disc_animation, the_falling_disc,
-                         player_1_score, player_2_score);
+                         &player_1_score, &player_2_score);
     draw_discs();
     draw_column_selector(column);
 }
 
-void update_local_multiplayer(int* current_column_index,
-                              falling_disc* the_falling_disc,
-                              bool* play_falling_disc_animation) {
+static void update_local_multiplayer(int* current_column_index,
+                                     falling_disc* the_falling_disc,
+                                     bool* play_falling_disc_animation) {
     if (IsKeyPressed(KEY_U)) {
         undo_last_move();
         *play_falling_disc_animation = false;
@@ -420,9 +458,9 @@ void update_local_multiplayer(int* current_column_index,
 }
 
 //----------------------------------------------------------------------------
-void draw_game_end(Camera2D camera) {
-    draw_a_grid(camera, CELL_WALL_LENGTH, GRID_OFFSET_X, GRID_DOT_SIZE,
-                current_theme->background_grid);
+static void draw_game_end(Camera2D camera) {
+    draw_a_grid(camera, CELL_WALL_LENGTH, GRID_OFFSET_X, GRID_OFFSET_Y,
+                GRID_DOT_SIZE, current_theme->background_grid);
     for (int i = 4; i < 11; i++) {  // playing grid
         for (int j = 2; j < 10; j++) {
             Vector2 center = {.x = (j * CELL_WALL_LENGTH) + GRID_OFFSET_X,
@@ -432,7 +470,7 @@ void draw_game_end(Camera2D camera) {
     }
     draw_discs();
 }
-void update_game_end() {
+static void update_game_end() {
     if (IsKeyPressed(KEY_SPACE)) {
         while (undo_last_move() == 1) {  // reset board
             ;
@@ -502,7 +540,7 @@ int main() {
                 if (animate_grid_transform(camera, MENU_GRID_LENGTH,
                                            CELL_WALL_LENGTH, MENU_GRID_OFFSET,
                                            GRID_OFFSET_X, MENU_GRID_DOT_RADIUS,
-                                           GRID_DOT_SIZE, 0.3f)) {
+                                           GRID_DOT_SIZE, 0.3f, 0.3f)) {
                     current_scene = LOCAL_MULTIPLAYER;
                 }
                 break;
