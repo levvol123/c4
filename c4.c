@@ -1,77 +1,73 @@
 #include <stdio.h>
 
-#define BOARD_SIZE 7*6
+#define BOARD_SIZE 7 * 6
 #define ROWS 6
 #define COLUMNS 7
 
-typedef enum {EMPTY, DISC_RED, DISC_BLUE} disc;
+typedef enum { EMPTY, DISC_RED, DISC_BLUE } disc;
 
 disc discs[ROWS][COLUMNS] = {0};
 int next_disc[COLUMNS];
 disc next_colour;
 
-int column_moves[BOARD_SIZE+1];
-int row_moves[BOARD_SIZE+1];
+int column_moves[BOARD_SIZE + 1];
+int row_moves[BOARD_SIZE + 1];
 int number_of_moves;
 
-
-void init_c4(){
-    for (int i = 0; i < COLUMNS; i++)
-    {
+void init_c4() {
+    for (int i = 0; i < COLUMNS; i++) {
         next_disc[i] = ROWS;
     }
     next_colour = DISC_RED;
 }
 
-int get_color(int row, int column){
-    switch (discs[row][column])
-    {
+int get_color(int row, int column) {
+    switch (discs[row][column]) {
         case DISC_RED:
             return 1;
             break;
         case DISC_BLUE:
             return 2;
-            break;    
+            break;
         default:
             return 0;
             break;
     }
 }
-int get_current_player(){
-    if(next_colour == DISC_BLUE){
+int get_current_player() {
+    if (next_colour == DISC_BLUE) {
         return 2;
-    } else{
+    } else {
         return 1;
     }
 }
-void place_disc(int column){
-    if(next_disc[column] > 0){
-        next_disc[column] -=1; 
+void place_disc(int column) {
+    if (next_disc[column] > 0) {
+        next_disc[column] -= 1;
 
         discs[next_disc[column]][column] = next_colour;
-        //printf("PLACED AT ROW:%d, COLUMN:%d \n",next_disc[column], column);
+        // printf("PLACED AT ROW:%d, COLUMN:%d \n",next_disc[column], column);
 
-        if(next_colour == DISC_RED){
+        if (next_colour == DISC_RED) {
             next_colour = DISC_BLUE;
-        }
-        else{
+        } else {
             next_colour = DISC_RED;
         }
-        number_of_moves +=1;
+        number_of_moves += 1;
         column_moves[number_of_moves] = column;
         row_moves[number_of_moves] = next_disc[column];
     }
 }
 
-int undo_last_move(){
-    if(number_of_moves > 0){
-        discs[row_moves[number_of_moves]][column_moves[number_of_moves]] = EMPTY;
-        next_disc[column_moves[number_of_moves]] +=1;
-        number_of_moves -=1;
-        if(next_colour == DISC_RED){
+int undo_last_move() {
+    if (number_of_moves > 0) {
+        discs[row_moves[number_of_moves]][column_moves[number_of_moves]] =
+            EMPTY;
+        next_disc[column_moves[number_of_moves]] += 1;
+        number_of_moves -= 1;
+        if (next_colour == DISC_RED) {
             next_colour = DISC_BLUE;
-        }
-        else{
+        } else {
             next_colour = DISC_RED;
         }
         return 1;
@@ -79,7 +75,7 @@ int undo_last_move(){
     return 0;
 }
 
-int get_next_row_from_column(int column){
+int get_next_row_from_column(int column) {
     return next_disc[column];
 }
 
@@ -90,27 +86,27 @@ int get_next_row_from_column(int column){
 //     {
 //         /* code */
 //     }
-    
+
 //     //evaluate columns
 //     //evaluate diagonals
 //     return 0;
-// }  
+// }
 
-int evaluate_position_on_last_move(int column){
+int evaluate_position_on_last_move(int column) {
     int player1_count;
     int player2_count;
-    //evaluate row ->start at ---x---
-    for (int i = 0; i < COLUMNS; i++)
-    {
-        if(discs[next_disc[column]][i] == DISC_RED){
+    int row = next_disc[column];
+    // evaluate row ->start at ---x---
+    for (int i = 0; i < COLUMNS; i++) {
+        if (discs[next_disc[column]][i] == DISC_RED) {
             player1_count += 1;
-            if(player1_count == 4){
+            if (player1_count == 4) {
                 return 1;
             }
             player2_count = 0;
-        } else if (discs[next_disc[column]][i] == DISC_BLUE){
+        } else if (discs[next_disc[column]][i] == DISC_BLUE) {
             player2_count += 1;
-            if(player2_count == 4){
+            if (player2_count == 4) {
                 return 2;
             }
             player1_count = 0;
@@ -119,18 +115,71 @@ int evaluate_position_on_last_move(int column){
             player2_count = 0;
         }
     }
-    //evaluate column
-    if(next_disc[column] < 4){
-        if(discs[next_disc[column]][column] == DISC_RED && discs[next_disc[column]+1][column] == DISC_RED && 
-        discs[next_disc[column]+2][column] == DISC_RED && discs[next_disc[column]+3][column] == DISC_RED) {
+    // evaluate column
+    if (next_disc[column] < 4) {
+        if (discs[next_disc[column]][column] == DISC_RED &&
+            discs[next_disc[column] + 1][column] == DISC_RED &&
+            discs[next_disc[column] + 2][column] == DISC_RED &&
+            discs[next_disc[column] + 3][column] == DISC_RED) {
             return 1;
-        } else if (discs[next_disc[column]][column] == DISC_BLUE && discs[next_disc[column]+1][column] == DISC_BLUE && 
-        discs[next_disc[column]+2][column] == DISC_BLUE && discs[next_disc[column]+3][column] == DISC_BLUE) {
+        } else if (discs[next_disc[column]][column] == DISC_BLUE &&
+                   discs[next_disc[column] + 1][column] == DISC_BLUE &&
+                   discs[next_disc[column] + 2][column] == DISC_BLUE &&
+                   discs[next_disc[column] + 3][column] == DISC_BLUE) {
             return 2;
         }
     }
-    //evaluate diagonals
-    
+    // evaluate diagonals
+    // get offset.
+    int offset_r = column - row;
+    player1_count = 0;
+    player2_count = 0;
+    for (int i = 0; i < ROWS; i++) {
+        int c = i + offset_r;
+        if (c < 0 || c >= COLUMNS) {
+            continue;
+        }
+        if (discs[i][c] == DISC_RED) {
+            player1_count += 1;
+            if (player1_count == 4) {
+                return 1;
+            }
+            player2_count = 0;
+        } else if (discs[i][c] == DISC_BLUE) {
+            player2_count += 1;
+            if (player2_count == 4) {
+                return 2;
+            }
+            player1_count = 0;
+        } else {
+            player1_count = 0;
+            player2_count = 0;
+        }
+    }
+    int offset_l = column + row;
+    player1_count = 0;
+    player2_count = 0;
+    for (int i = 0; i < ROWS; i++) {
+        int c = offset_l - i;
+        if (c < 0 || c >= COLUMNS) {
+            continue;
+        }
+        if (discs[i][c] == DISC_RED) {
+            player1_count += 1;
+            if (player1_count == 4) {
+                return 1;
+            }
+            player2_count = 0;
+        } else if (discs[i][c] == DISC_BLUE) {
+            player2_count += 1;
+            if (player2_count == 4) {
+                return 2;
+            }
+            player1_count = 0;
+        } else {
+            player1_count = 0;
+            player2_count = 0;
+        }
+    }
     return 0;
-
-} 
+}
